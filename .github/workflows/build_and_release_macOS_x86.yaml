@@ -52,17 +52,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
         matrix:
-          os: [ macOS-13 ]
+          os: [ macos-15 ]
         fail-fast: false
     steps:
-      - name: Install Dependencies
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y \
-            libpixman-1-dev libfreetype6-dev libharfbuzz-dev zlib1g-dev \
-            libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev
       - uses: actions/checkout@v4
       - name: Install Aseprite
         shell: bash
@@ -86,8 +78,9 @@ jobs:
           export skia_arch=x64
 
           cmake -S . -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 \
             -DENABLE_TESTS=OFF \
             -DENABLE_SCRIPTING=$enable_scripting \
             -DENABLE_CCACHE=$enable_ccache \
@@ -109,11 +102,11 @@ jobs:
         run: echo '# This file is here so Aseprite behaves as a portable program' > aseprite.ini
       - name: Create release
         working-directory: aseprite/build/bin
-        run: 7z -tzip a Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}.zip *
+        run: 7z -tzip a Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}-x64.zip *
       - name: Upload release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: aseprite/build/bin/Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}.zip
-          asset_name: Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}.zip
+          file: aseprite/build/bin/Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}-x64.zip
+          asset_name: Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}-x64.zip
           tag: ${{ needs.create-release.outputs.release-tag }}
